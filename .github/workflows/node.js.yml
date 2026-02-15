@@ -1,6 +1,3 @@
-# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
-
 name: CI & Deploy to GitHub Pages
 
 on:
@@ -15,7 +12,6 @@ permissions:
   id-token: write
 
 jobs:
-  # Matrix job to run tests/build checks across Node versions
   build:
     runs-on: ubuntu-latest
     strategy:
@@ -27,16 +23,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'
-      - run: |
-          if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then
-            npm ci
-          else
-            npm install
-          fi
-      - run: npm run build --if-present
-      - run: npm test || true
-      # Upload the built site only once from a chosen matrix entry (avoid duplicate artifacts)
+          cache: 'yarn'
+      - run: yarn install --frozen-lockfile
+      - run: yarn build
+      - run: yarn test || true
       - name: Upload `dist` artifact (only on node 20.x)
         if: matrix.node-version == '20.x'
         uses: actions/upload-artifact@v4
@@ -44,7 +34,6 @@ jobs:
           name: dist-artifact
           path: dist
 
-  # Deploy job: downloads the built `dist` and deploys to GitHub Pages
   pages:
     needs: build
     runs-on: ubuntu-latest
@@ -56,17 +45,16 @@ jobs:
           path: dist
 
       - name: Configure Pages
-        uses: actions/configure-pages@v3
+        uses: actions/configure-pages@v4
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v1
+        uses: actions/upload-pages-artifact@v4
         with:
           path: ./dist
 
       - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v1
+        uses: actions/deploy-pages@v4
 
-  # Optional: add a simple job to preview the production build (can be removed)
   preview:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
@@ -76,10 +64,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
-      - run: |
-          if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then
-            npm ci
-          else
-            npm install
-          fi
-      - run: npm run build --if-present
+          cache: 'yarn'
+      - run: yarn install --frozen-lockfile
+      - run: yarn build
