@@ -2,7 +2,7 @@ import { Rocket } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 
 export default function Hero() {
-  const { isDark } = useTheme()
+  useTheme()
 
   return (
     <section className="font-primary flex flex-col items-center justify-center gap-[48px] pt-[120px] pb-[80px] px-[80px] w-full bg-[var(--color-bg)]">
